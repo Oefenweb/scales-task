@@ -1,0 +1,80 @@
+body
+{
+    background-color:grey;
+	background-repeat:repeat;
+	color:#FFF;
+	font-family:Verdana, Geneva, sans-serif;
+	text-align:left;
+	font-size:12px;
+}
+
+h1
+{
+	font-size: 40px;
+}
+
+div.gameWindow
+{
+	height: 700px;
+	width: 1250px;
+    padding: 10px;
+    border: 5px solid white;
+    margin: 0px;
+	color: #FFFFFF;
+}
+
+div.gameWindow2
+{
+	height: 750px;
+	width: 1250px;
+    padding: 10px;
+    margin: 0px;
+	color: #FFFFFF;
+}
+
+
+div.multipleChoice
+{
+	height: 250px;
+	width: 1250px;
+    padding: 10px;
+    border: 5px solid white;
+    margin: 0px;
+}
+
+p.h1 
+{
+	color: #CCC;
+	font-family: Tahoma, Geneva, sans-serif;
+	text-align: left;
+	font-size: 14px;
+	font-weight:bold;
+    margin:20px
+}
+
+p.centered
+{
+	color: #CCC;
+	font-family: Tahoma, Verdana, Geneva, sans-serif;
+	text-align: center;
+	front-size: 14px;
+	font-weight:bold;
+}
+
+a:link 
+{
+    color:#CCC;
+    text-decoration:none;
+}
+
+a:visited 
+{
+    color:#CCC;
+    text-decoration:none;
+}
+
+a:hover 
+{
+    color:#FFF;
+    text-decoration:none;
+}

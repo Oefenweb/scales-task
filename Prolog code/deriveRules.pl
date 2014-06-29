@@ -1,5 +1,6 @@
 % deriveRules.pl
-% Derives all the (extra) facts (information) from one scale.
+% Derives all the (extra) facts (information) from one scale and
+% asserts the facts to the knowledge base.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -10,12 +11,26 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Note: all the derive/3 and derive_extra/3 predicates cover all cases
+% up to two (different) objects on one side of a scale and four
+% different objects on one scale in total.
+% Derivation rules that are redundant and/or inconsistent are in
+% comments. These derivation rules are not part of the program, but have
+% not been removed. This has been done to clarify the different cases.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % The predicate derive/3 derives all the facts (information) from one
-% scale. For example, the second case states that when there is a scale
-% with an object A on the left, an object B on the right, and the scale
-% is tipped to the left, then it can be derived that object A is heavier
-% than object B. All the derived facts (information) are asserted to the
-% knowledge base.
+% scale. The first derive/3 predicate tries to remove the same objects
+% on both sides of scale. For example, a scale with objects A and B on
+% the left side and objects A and C on the right side, is the same as a
+% scale with object B on the left side and objects C on the right side
+% (no matter how the scale is tilted). All the other derive/3 predicates
+% cover the cases described above. For example, the second case states
+% that when there is a scale with object A on the left side, object B on
+% the right side, and the scale is tilted to the left, then it can be
+% derived that object A is heavier than object B. All the derived facts
+% (information) are asserted to the knowledge base.
 
 /* --- Remove same objects on both side. --- */
 
@@ -244,16 +259,17 @@ derive([A, B], [C, D], equal):-
 
 % The predicate derive_extra/3 derives all the extra facts (information)
 % from one scale. For example, the second case states that when there is
-% a scale with objects A and C on the left, objects B and D on the
-% right, the scale is equal (in balance), and object B is heavier
+% a scale with objects A and C on the left side, objects B and D on the
+% right side, the scale is equal (in balance), and object B is heavier
 % than object A, then it can be derived that object C is heavier than
 % object D. All the derived facts (information) are asserted to the
 % knowledge base.
 
-% If there is a scale with more than one object on both sides, and there
-% are two objects on the scale that have an 'equal' relation (and both
-% objects are on a different side), then the two objects can be removed
-% from the scale and a new derivation can be performed.
+% If there is a scale with more than one object on both sides (two
+% objects on both sides), and there are two objects on the scale that
+% have an 'equal' relation (and both objects are on a different side),
+% then the two objects can be removed from the scale and a new
+% derivation can be performed.
 
 derive_extra(L1, L2, Balance) :-
 	length(L1, Length1),
@@ -306,7 +322,8 @@ derive_extra([A, C], [B, D], equal) :-
 % wheteher two objects (Object1 and Object2) that have an 'equal'
 % relation, do not have a 'heavier' relation.
 % In other words, the predicate unique_relation/2 checks whether two
-% objects really have a unique relation.
+% objects really have a unique relation. This check is performed to
+% tackle inconsistent scales.
 
 unique_relation(Object1, Object2) :-
 	heavier(Object1, Object2), !,

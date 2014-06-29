@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" type="text/css" href="layout.css">
+</head>
+
+<body>	
+	<h1 align="center">
+		Scales Task
+	</h1>
+
+	<center>
+		<br>
+		<div id="ScalesTask" align="center" class="gameWindow">
+			<div>
+				<br>
+				<div id="timer" style="font-size: 23.7px">Time: 20</div>
+				
+				<img src="item.png">
+
+				<div class="buttons" align="center">
+
+					<br><br>
+					<a href="fail.html">
+						<img src="Weight_4.png" width='100' /> 
+					</a>
+					<a href="fail.html">
+						<img src="Weight_2.png" width='100' /> 
+					</a>
+					<a href="fail.html">
+						<img src="Weight_5.png" width='100' /> 
+					</a>
+					<a href="pass.html">
+						<img src="Weight_7.png" width='100' /> 
+					</a>
+					<a href="fail.html">
+						<img src="Weight_8.png" width='100' /> 
+					</a>
+				</div>
+			</div>
+		</div>		
+	</center>
+	
+	<script>
+		var timer = "Time: ";
+
+		// total number of seconds 
+		var seconds = 19;
+			 
+		// get tag element
+		var countdown = document.getElementById("timer");
+		 
+		// update the tag with id "countdown" every 1 second
+			
+		setInterval(function () 
+		{	
+		    // format countdown string + set tag value
+		    var secondsString = seconds.toString();
+		    countdown.innerHTML = timer.fontsize(5) + secondsString.fontsize(5);
+
+		    if(seconds == 0)
+		    {
+		    	Redirect1();
+		    }
+		    
+		    // decrement counter
+		    seconds -= 1;  
+		}, 1000);
+
+		function Redirect1()
+		{
+			window.location="time.html";
+		}
+	</script>
+</body>
+</html>

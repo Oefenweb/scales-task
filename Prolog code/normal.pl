@@ -1,11 +1,14 @@
+% IMPORTANT: The following code is not written by ourselves. The code is
+% obtained from: http://courses.ece.ubc.ca/571f/randoml.html
+% The code has been slightly modified.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % normal.pl
 % using ranf to generate a normal distribution
 % -inf <= x <= inf, mean=M, standard deviation=S
 
-% if "ranf" already loaded,
-% then nothing happens 
-
-:- ensure_loaded(ranf).
+:- consult(ranf).
 :- arithmetic_function(normal/2).
 
 
@@ -14,7 +17,6 @@ normal(M,S,N) :-
 
 % classical fast method for computing
 % normal functions using polar co-ords
-% (no- i dont understand it either)
 box_muller(M,S,N) :-
 	w(W0,X),
 	W is sqrt((-2.0 * log(W0))/W0),

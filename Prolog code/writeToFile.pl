@@ -1,30 +1,43 @@
 % writeToFile.pl
-% Writes the representation of an item to a text file as a JSON string.
+% Writes the representation of an item to a text file as a JSON string
+% (with meta information).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Consult the file 'normal.pl' when consulting the program. The file
+% 'normal.pl' contains code for generating a normal distribution.
 
 :- consult(normal).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate write_to_text_file/5 writes the representation of an
-% item to a text file as a JSON string. This string also contains the
-% right answer and the class number of the item.
+% The predicate write_to_text_file/8 writes the representation of an
+% item to a text file as a JSON string. The predicate also writes some
+% meta information to the text file. Every item is written on a new
+% line. Every line contains the following information:
+% - The class index of the item
+% - The representation of the item as a JSON string
+% - A list with answer options for the item
+% - The right answer to the item (within a list)
+% - The maximum response time in seconds (is set to 20 for all the
+%   items)
+% - A rating for the item
+% - A start rating for the item (is equal to the rating)
+% All this information is space separated. The rating of a game items is
+% calculated as follows: (NScales + NDifferent + NTotal) - 3 + a random
+% number from the normal distribution with mean zero and SD 0.5.
 
 write_to_text_file(Stream, NScales, NDifferent, NTotal, Item, Answer_Options, Answer, Class) :-
 	write(Stream, Class),
-	write(Stream, '\s'),
 
-	write(Stream, '{'),
+	write(Stream, '\s{'),
 	modify_representation(Stream, Item, 1, NScales), !,
-	%write(Stream, ', "answer_options":"'),
-	%write_objects(Stream, Answer_Options),
-	%write(Stream, '", "answer":"'), write(Stream, Answer),
-	%write(Stream, '", "class":'), write(Stream, Class),
 	write(Stream, '}'),
 
 	write(Stream, '\s['), write_answer_options(Stream, Answer_Options), write(Stream, ']'),
+
 	write(Stream, '\s'), write(Stream, '["'), write(Stream, Answer), write(Stream, '"]'),
+
 	write(Stream, '\s'), write(Stream, '20'),
 
 	normal(0, 0.5, Noise),
@@ -32,8 +45,8 @@ write_to_text_file(Stream, NScales, NDifferent, NTotal, Item, Answer_Options, An
 	Start_Rating = Rating,
 
 	write(Stream, '\s'), write(Stream, Rating),
-	write(Stream, '\s'), write(Stream, Start_Rating),
 
+	write(Stream, '\s'), write(Stream, Start_Rating),
 	nl(Stream).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,6 +87,10 @@ write_objects(Stream, [H | T]) :-
 	write_objects(Stream, T).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The predicate write_answer_options/2 writes the answer options for an
+% item to a text file. The answer options are written in sub-lists and
+% are enclosed within one list.
 
 write_answer_options(_, []).
 

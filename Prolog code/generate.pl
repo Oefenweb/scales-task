@@ -1,20 +1,20 @@
-% generateImproved.pl
-% Generates items given a number of parameters.
+% generate.pl
+% Generates game items given a number of parameters.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Consult the files 'checkItem2.pl' and 'writeToFile.pl' when
-% consulting the program. The file 'checkItem2.pl' contains code for
-% solving (and checking) an item. The file 'writeToFile.pl' contains
+% Consult the files 'checkItem.pl' and 'writeToFile.pl' when
+% consulting the program. The file 'checkItem.pl' contains code for
+% solving and checking an item. The file 'writeToFile.pl' contains
 % code for writing the representation of an item to a text file (as a
 % JSON string).
 
-:- consult(checkItem2).
 :- consult(writeToFile).
+:- consult(checkItem).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Define dynamic predciate.
+% Define dynamic predicate.
 
 :- dynamic(side/2).
 
@@ -28,61 +28,34 @@ allObjects([a, b, c, d, e, f, g, h, i, j, k]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % The predicate generate_and_write/5 generates all items of a class
-% given four parameters: the number of scales within an item
-% ('NScales'), the number of different objects within an item
-% ('NDifferent'), the total number of objects within an item ('NTotal'),
-% and the class that specifies the parameters ('Class'). The fifth
-% argument ('N_Desired') is the number of items you want to obtain
-% from all the generated items. Every item that is generated and
-% obtained, is written to a text file as a JSON string. When the
-% predicate is called, the file 'all_items.txt' will be opened and all
-% the items will be written in this text file.
+% given four parameters: the class index that specifies the parameter
+% values ('Class'), the number of scales within an item ('NScales'), the
+% number of different objects within an item ('NDifferent'), and the
+% total number of objects within an item ('NTotal'). The fifth argument
+% ('N_Desired') is the number of items you want to obtain from all the
+% generated items. Every item that is generated and obtained, is written
+% to a text file as a JSON string (with meta information). When the
+% predicate is called, the file 'test.txt' will be opened and all the
+% items will be written in this text file.
 
-generate_and_write(NScales, NDifferent, NTotal, Class, N_Desired) :-
+generate_and_write(Class, NScales, NDifferent, NTotal, N_Desired) :-
 	retractall(side(_, _)),
 	findall([Item, Answer, Answer_Options], generate(NScales, NDifferent, NTotal, Item, Answer, Answer_Options), All_Items),
 	get_N_items(All_Items, N_Desired, 1, Desired_Items),
-
-	%print(Desired_Items), nl,
 	randomize(Desired_Items, Final_Items),
-	%print(Final_Items), nl,
-
-	open('all_items.txt', append, Stream),
+	open('test.txt', append, Stream),
 	write(Stream, '---------- '),
 	write(Stream, NScales), write(Stream, ', '),
 	write(Stream, NDifferent), write(Stream, ', '),
 	write(Stream, NTotal),
 	write(Stream, ' ----------'), nl(Stream),
 	write_items(Stream, NScales, NDifferent, NTotal, Final_Items, Class), !,
-	nl(Stream), % New line in stream.
+	nl(Stream),
 	close(Stream),
-
 	length(All_Items, N_All_Items),
 	print('Total number of items generated: '), print(N_All_Items), nl,
 	length(Final_Items, N_Final_Items),
 	print('Number of items selected: '), print(N_Final_Items).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-randomize([], []).
-
-randomize([[Item, Answer, Answer_Options] | Others], [[Randomized, Answer, Answer_Options] | Rest]) :-
-	random_permutation(Item, Randomized),
-	randomize(Others, Rest).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% The predicate write_items/3 writes an item to a text file using the
-% predicate write_to_text_file/4 (see the file 'writeToFile.pl' for this
-% predicate).
-
-% Base case.
-write_items(_, _, _, _, [], _).
-
-% Recursive step.
-write_items(Stream, NScales, NDifferent, NTotal, [[Item, Answer, Answer_Options] | Others], Class) :-
-	write_to_text_file(Stream, NScales, NDifferent, NTotal, Item, Answer_Options, Answer, Class),
-	write_items(Stream, NScales, NDifferent, NTotal, Others, Class).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -91,11 +64,27 @@ write_items(Stream, NScales, NDifferent, NTotal, [[Item, Answer, Answer_Options]
 % objects within an item ('NDifferent'), and the total number of objects
 % within an item ('NTotal'). The function returns an item ('Item'),
 % the right answer ('Answer'), and the answer options
-% ('Answer_Options'). The answer for an item and the answer options are
-% found with the predicate item_check/2 (see the file 'checkItem2.pl'
+% ('Answer_Options'). The answer to an item and the answer options are
+% found with the predicate item_check/2 (see the file 'checkItem.pl'
 % for this predicate).
 
-% Short description of the algorithm here...
+/*
+
+Step by step overview of the algorithm:
+
+1. Store ALL the objects in the list 'Objects'.
+2. Select NDifferent objects from 'Objects' and store the selected
+   objects in the list 'CObjects'
+3. Obtain the required number of sides (backtracking enabled)
+5. Put all the sides in the list 'Appended'
+6. Check if the list 'Appended' is of length NTotal
+7. Check if the list 'Appended' contains NDifferent objects
+8. Get NScales members from the the list with positions (backtracking
+   enabled).
+9. Check if the game item can be solved
+10.Return the item, the answer, and the answer options
+
+*/
 
 % Generate items with one scale.
 generate(1, NDifferent, NTotal, Item, Answer, Answer_Options):-
@@ -111,6 +100,8 @@ generate(1, NDifferent, NTotal, Item, Answer, Answer_Options):-
 	member(CurrentPos, Positions),
         item_check([[Side1, Side2, CurrentPos]], Answer, Answer_Options),
         Item = [[Side1, Side2, CurrentPos]].
+
+%%%%%%%%%%
 
 % Generate items with two scales.
 generate(2, NDifferent, NTotal, Item, Answer, Answer_Options):-
@@ -130,6 +121,8 @@ generate(2, NDifferent, NTotal, Item, Answer, Answer_Options):-
         member(CurrentPos2, Positions),
         item_check([[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2]], Answer, Answer_Options),
         Item = [[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2]].
+
+%%%%%%%%%%
 
 % Generate items with three scales.
 generate(3, NDifferent, NTotal, Item, Answer, Answer_Options):-
@@ -153,6 +146,8 @@ generate(3, NDifferent, NTotal, Item, Answer, Answer_Options):-
         member(CurrentPos3, Positions),
         item_check([[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2], [Side5, Side6, CurrentPos3]], Answer, Answer_Options),
         Item = [[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2], [Side5, Side6, CurrentPos3]].
+
+%%%%%%%%%%
 
 % Generate items with four scales.
 generate(4, NDifferent, NTotal, Item, Answer, Answer_Options):-
@@ -180,6 +175,8 @@ generate(4, NDifferent, NTotal, Item, Answer, Answer_Options):-
 	member(CurrentPos4, Positions),
         item_check([[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2], [Side5, Side6, CurrentPos3], [Side7, Side8, CurrentPos4]], Answer, Answer_Options),
         Item = [[Side1, Side2, CurrentPos1], [Side3, Side4, CurrentPos2], [Side5, Side6, CurrentPos3], [Side7, Side8, CurrentPos4]].
+
+%%%%%%%%%%
 
 % Generate items with five scales.
 generate(5, NDifferent, NTotal, Item, Answer, Answer_Options):-
@@ -228,14 +225,13 @@ getNObjects(N, [H|T], [H|Result]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % The predicate findSides/3 returns two sides for a scale given the
-% number of differen objects within an item (the predicate actually
-% generates the sides for a scale). There are four combination of sides
-% possible:
+% different objects within an item (the predicate actually generates the
+% sides for a scale). There are four possible combinations of sides:
 % - One object on both sides.
 % - One object on the left side and two objects on the right side.
 % - Two objects on the left side and one object on the right side.
 % - Two objects on both sides.
-% These four combinations are incorporated in this predciate.
+% These four combinations are incorporated in this predicate.
 
 % One object on both sides. [X], [X] is excluded while this is
 % inconsistent or redundant (depending on how the scale is tilted).
@@ -265,7 +261,7 @@ findSides(CObjects, Side1, Side2) :-
 	append(Side2, Side2, Double),
 	Side1 \= Double.
 
-% Two objects on both sides. Same sides are excluded while this in
+% Two objects on both sides. Same sides are excluded while this
 % inconsistent or redundant (depending on how the scale is tilted).
 
 findSides(CObjects, Side1, Side2) :-
@@ -275,7 +271,7 @@ findSides(CObjects, Side1, Side2) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate getElement/2 obtains (and returns) an element from a
+% The predicate getElement/2 obtains (and returns) one element from a
 % list.
 
 % Base case.
@@ -306,16 +302,11 @@ getCombination([_|T], Ans) :-
 % sides within an item (this depends on how the scales are tilted).
 
 check_sides(Side1, Side2) :-
-	(
-	    side(Side1, Side2)%; % Reduces the possible configurations of scales within an item!
-	    %side(Side2, Side1)
-	) ->
-	false;
-	true.
+	not(side(Side1, Side2)). % Reduces the possible configurations of scales within an item!
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate countUnique/2 checks wheter a list contains N unique
+% The predicate countUnique/2 checks whether a list contains N unique
 % elements.
 
 % Base case.
@@ -378,56 +369,30 @@ element_at(N, [_ | Other_Elements], Element) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate checkDoubles/1 checks if an item contains two
-% identical scales. The predicate fails if this is the case.
+% The predicate randomize/2 randomizes the elements within a list. The
+% predicate is used to randomize the scales within an item when the item
+% has been generated.
 
-% Can be removed because of check_sides?
+% Base case.
+randomize([], []).
 
-checkDoubles([List1, List2]) :-
-	List1 \= List2.
-
-checkDoubles([List|Tail]) :-
-	not(member(List, Tail)),
-	checkDoubles(Tail).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-test_print([]).
-
-test_print([H | T]) :-
-	print(H), nl,
-	test_print(T).
+% Recursive step.
+randomize([[Item, Answer, Answer_Options] | Others], [[Randomized_Item, Answer, Answer_Options] | Rest]) :-
+	random_permutation(Item, Randomized_Item),
+	randomize(Others, Rest).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-/*
-getScale(CObjects, [Left, Right, CurrentPos]):-
-      findSide(CObjects, Left), findSide(CObjects, Right),
-      positions(Positions), member(CurrentPos, Positions).
+% The predicate write_items/6 writes an item to a text file using the
+% predicate write_to_text_file/8 (see the file 'writeToFile.pl' for this
+% predicate).
 
+% Base case.
+write_items(_, _, _, _, [], _).
 
-generate(1, NDifferent, NTotal, NBalanced, [[Left, Right, CurrentPos]]):-
-      allObjects(Objects), getNObjects(NDifferent, Objects, CObjects),
-      getScale(CObjects, NDifferent, [Left, Right, CurrentPos]),
-      appendAll([Left, Right], AllObjects),
-      length(AllObjects, NTotal),
-      countUnique(AllObjects, NDifferent),
-      count(equal, [CurrentPos], NBalanced),
-      item_check([[Left, Right, CurrentPos]]).
+% Recursive step.
+write_items(Stream, NScales, NDifferent, NTotal, [[Item, Answer, Answer_Options] | Others], Class) :-
+	write_to_text_file(Stream, NScales, NDifferent, NTotal, Item, Answer_Options, Answer, Class),
+	write_items(Stream, NScales, NDifferent, NTotal, Others, Class).
 
-
-generate(2, NDifferent, NTotal, NBalanced, [[L1, R1, Pos1], [L2, R2, Pos2]]):-
-      allObjects(AllObjects),
-      NDifferent is N1 + N2,
-      getNObjects(N1, AllObjects, CObjects1),
-      deleteList(AllObjects, CObjects1, NewObjects),
-      getNObjects(N2, NewObjects, CObjects2),
-      getScale(CObjects1, N1, [L1, R1, Pos1]),
-      getScale(CObjects2, N2, [L2, R2, Pos2]),
-      print(CObjects1), nl, print(CObjects2),
-      appendAll([L1, R1, L2, R2], AllObjects),
-      length(AllObjects, NTotal),
-      countUnique(AllObjects, NDifferent),
-      count(equal, [Pos1, Pos2], NBalanced),
-      item_check([[L1, R1, Pos1], [L2, R2, Pos2]]).
-*/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

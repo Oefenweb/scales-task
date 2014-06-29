@@ -1,12 +1,14 @@
-% checkItem2.pl
-% Finds the solutions for a given item (if there is a solution).
+% checkItem.pl
+% Finds the solution for a given item (if there is a solution) and
+% mutually checks if the item is not inconsistent and/or redundant.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Consult the file 'deriveRulesImproved.pl' when consulting the program.
-% This file contains all the derivation rules for one scale.
+% Consult the file 'deriveRules.pl' when consulting the program.
+% The file 'deriveRules.pl' contains all the derivation rules for one
+% scale.
 
-:- consult(deriveRulesImproved).
+:- consult(deriveRules).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -18,10 +20,32 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate item_check/3 finds the solution for a given item. The
-% predicate also returns the (unique) objects in an item (which will
-% be used as answer options). The predicate fails if there is no unique
-% solution or if the item is inconsitent.
+% The predicate item_check/3 finds (and returns) the solution for a
+% given item. The predicate also returns the (unique) objects in an item
+% (these will be used as answer options). The predicate fails if there
+% is no unique solution, if the item is inconsitent, or if the item
+% contains redundant scales.
+
+/*
+
+Step by step overview of the algorithm:
+
+1. Reset the knowledge base.
+2. Check if the item contains inconsistent scales. An item contains
+   inconsistent scales if there are two scales within the item that have
+   the same objects on the left side and on the right side, but which
+   are tilted in different ways. The predicate fails if that is the
+   case.
+3. Obtain all the objects from the item and assert the objects to the
+   knowledge base.
+4. Assert all the facts about the relations between the objects to the
+   knwoledge base, and mutually check for inconsistency and redundancy.
+   The predicate fails if the item is inconsistent and/or if the item
+   contains redundant scales.
+5. Find the haviest object. The predicate fails if there is no unique
+   solution.
+
+*/
 
 item_check(Representation, Heaviest_Object, Objects) :-
 	reset,
@@ -32,8 +56,8 @@ item_check(Representation, Heaviest_Object, Objects) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predicate reset/0 resets the knowledge base: all the relations are
-% retracted from the knowledge base.
+% The predicate reset/0 resets the knowledge base: all the facts
+% (relations) are retracted from the knowledge base.
 
 reset :-
 	retractall(heavier(_, _)),
@@ -43,11 +67,11 @@ reset :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % The predicate check_inconsistent_scales/1 checks whether an item
-% contains inconsistent scales. An item contains inconsistent scales
-% if there are two scales with the same objects on it, but which
-% are tilted in different ways. For example, an item with the scale
-% [[a], [b], left] and the scale [[a], [b], right] or [[a], [b], equal]
-% is inconsistent.
+% contains inconsistent scales. An item contains inconsistent scales if
+% there are two scales within the item that have the same objects on the
+% left side and on the right side, but which are tilted in different
+% ways. For example, an item with the scales [[a], [b], left] and [[a],
+% [b], right] or [[a], [b], equal] is inconsistent.
 
 % Base case.
 check_inconsistent_scales([]).
@@ -76,9 +100,10 @@ check_scale([ObjectsLeft, ObjectsRight, Position], [[_, _, _] | T]) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predciate add_all_objects/2 finds all the (unique) objects in an
-% item and asserts the objects to the knowledge base. The function also
-% returns the unique objects (which will be used as answer options).
+% The predicate add_all_objects/2 obtains all the (unique) objects from
+% an item and asserts the objects to the knowledge base. The predicate
+% also returns the unique objects (these will be used as answer
+% options).
 
 add_all_objects(Representation, Final_Objects) :-
 	flatten(Representation, Representation_Flattened),
@@ -106,8 +131,8 @@ remove_dup([First | Rest], [First | NewRest]) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% The predciate add_objects/1 asserts all the elements (= objects) from
-% a given input list to the knowledge base. Note that the predciate
+% The predicate add_objects/1 asserts all the elements (objects) from
+% a given input list to the knowledge base. Note that the predicate
 % first checks if the object is not already in the knowledge base before
 % asserting it!
 
@@ -148,7 +173,7 @@ add_all_facts([H | T]) :-
 
 % The predicate add_facts_one_scale/3 asserts all the facts
 % (information) that can be derived from one scale to the knowledge base
-% (using the derive/3 predicate, see the file 'deriveRulesImproved.pl').
+% (using the derive/3 predicate, see the file 'deriveRules.pl').
 
 add_facts_one_scale([Objects_Left, Objects_Right, Position]) :-
 	derive(Objects_Left, Objects_Right, Position), !.
@@ -158,7 +183,7 @@ add_facts_one_scale([Objects_Left, Objects_Right, Position]) :-
 % The predicate add_extra_facts_one_scale/3 asserts all the extra
 % facts (information) that can be derived from one scale to the
 % knowledge base (using the derive_extra/3 predicate, see the file
-% 'deriveRulesImproved.pl').
+% 'deriveRules.pl').
 
 add_extra_facts_one_scale([Objects_Left, Objects_Right, Position]) :-
 	derive_extra(Objects_Left, Objects_Right, Position), !.
@@ -277,7 +302,7 @@ find_equal(equal(A, C)) :-
 
 % The predicate find_heaviest_object/1 finds the heaviest object. The
 % predicate find_heaviest_object/0 calls the predicate
-% determine_heaviest_object/3. That predciate actually finds the
+% determine_heaviest_object/3. That predicate actually finds the
 % heaviest object. The predicate find_heaviest_object/1 fails if there
 % is no heaviest object (no unique solution).
 
@@ -300,7 +325,7 @@ determine_heaviest_object([Object | _], All_Objects, Heaviest_Object) :-
 	determine_heaviest_object([X | New_Result], Result, Heaviest_Object).
 
 % If the found object has no 'equal' relations with other objects, the
-% predciate check_other_objects/2 is called. This predicate checks if
+% predicate check_other_objects/2 is called. This predicate checks if
 % the possibly heaviest object is actually heavier than all the other
 % objects.
 
